@@ -15,7 +15,11 @@ export {
     global mcd_udp_init_e: event(a: addr);
     global mcd_udp_init: function(a:addr); 
     global mcd_udp_accounting: function(c: connection); 
-    global mcd_udp_accounting_e: event(c: connection); 
+    global mcd_udp_accounting_e: event(c: connection);
+
+    redef Signatures::actions += {  ["tcp-mcd"] = Signatures::SIG_ALARM_PER_ORIG,
+                                    ["udp-mcd"] = Signatures::SIG_ALARM_PER_ORIG,
+                            } ; 
 
 }
 
@@ -45,10 +49,7 @@ event signature_match(state: signature_state, msg: string, data: string)
     #   mcd server is a really bad thing.  Unlikely to be used with
     #   DDOS cause .. TCP.
     #
-
-
-
-    if (/^memcached_tcp_match$/ in state$sig_id) {
+    if (/^tcp-mcd$/ in state$sig_id) {
         local to_ip:addr = state$conn$id$orig_h;
         local tr_ip:addr = state$conn$id$resp_h;
         if ( !Site::is_local_addr(to_ip) ) {
@@ -62,7 +63,7 @@ event signature_match(state: signature_state, msg: string, data: string)
     local ur_ip : addr = state$conn$id$resp_h;
 
     # UDP is a mess.  We keep state ...
-    if (/^memcached_udp_match$/ in state$sig_id) {
+    if (/^udp-mcd$/ in state$sig_id) {
         uo_ip = state$conn$id$orig_h;
         ur_ip = state$conn$id$resp_h;
         if ( !Site::is_local_addr(uo_ip) ) {

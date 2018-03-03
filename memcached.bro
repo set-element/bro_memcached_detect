@@ -17,6 +17,10 @@ export {
 	global mcd_ports: set[port] = [11211/tcp, 11211/udp];
 
 	global mem_cd_udp_server: table[addr] of count &write_expire=mcd_state_timeout &default=0;
+
+        redef Signatures::actions += {  ["tcp-mcd"] = Signatures::SIG_ALARM_PER_ORIG,
+                                        ["udp-mcd"] = Signatures::SIG_ALARM_PER_ORIG,
+                            } ;
 }
 
 event signature_match(state: signature_state, msg: string, data: string)
@@ -25,7 +29,7 @@ event signature_match(state: signature_state, msg: string, data: string)
 	#   mcd server is a really bad thing.  Unlikely to be used with
 	#   DDOS cause .. TCP.
 	#
-	if (/^memcached_tcp_match$/ in state$sig_id) {
+	if (/^tcp-mcd$/ in state$sig_id) {
 
 		local to_ip:addr = state$conn$id$orig_h;
 		local tr_ip:addr = state$conn$id$resp_h;
@@ -40,7 +44,7 @@ event signature_match(state: signature_state, msg: string, data: string)
 	} # end memcached_tcp_match
 
 	# UDP is a mess.  We keep state ...
-	if (/^memcached_udp_match$/ in state$sig_id) {
+	if (/^udp-mcd$/ in state$sig_id) {
 
 		local uo_ip:addr = state$conn$id$orig_h;
 		local ur_ip:addr = state$conn$id$resp_h;
